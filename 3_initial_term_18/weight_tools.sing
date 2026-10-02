@@ -1,0 +1,14 @@
+proc weightInitial(poly p) {
+  int mn=10000;int w;intvec ee;poly t;poly answer;
+  while(p!=0) {
+    t=lead(p);ee=leadexp(p);p=p-t;
+    w=3*(ee[1]-ee[4])+2*(ee[2]-ee[5])+4*(ee[3]-ee[6]);
+    if(w<mn) { mn=w;answer=t; }
+    else { if(w==mn) { answer=answer+t; } }
+  }
+  return(answer);
+}
+proc initialWeight(poly p) {
+  intvec ee=leadexp(weightInitial(p));
+  return(3*(ee[1]-ee[4])+2*(ee[2]-ee[5])+4*(ee[3]-ee[6]));
+}

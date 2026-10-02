@@ -1,0 +1,49 @@
+// Every operator product and normal form below is computed in a Weyl algebra.
+// The commutative base is ONLY the constructor input for nc_algebra.
+ring constructorBase=(0,q),(x,y,z,Dx,Dy,Dz,s(1..3)),(dp(6),dp(3));
+matrix comm[9][9];
+comm[1,4]=1;
+comm[2,5]=1;
+comm[3,6]=1;
+def weylRing=nc_algebra(1,comm);
+setring weylRing;
+short=0;
+
+// These includes contain expressions only: neither changes the current ring.
+< "ann_generators.sing";
+// V.sing contains the Section 4 vector saved directly by 1_constructing_V.sing.
+< "V.sing";
+
+// Delta = D / (D*x + D*y + D*z), a LEFT MODULE, not a quotient algebra.
+// std and reduce in Plural use LEFT ideals. Do NOT use twostd or qring.
+ideal pointIdeal=x,y,z;
+ideal pointGB=std(pointIdeal);
+
+number s1curve=4*q^2-2;
+number s2curve=-(8*q^2+8*q+15)/6;
+number s3curve=q-1;
+ideal B=subst(annFs,s(1),s1curve);
+B=subst(B,s(2),s2curve);
+B=subst(B,s(3),s3curve);
+
+// The witness must be nonzero in Delta.
+if(reduce(V,pointGB)==0)
+{print("ERROR_WITNESS_ZERO");quit;}
+
+poly f=y*(z*y-x^2)*(z^2+x^2*y+z*y^2+x^3);
+poly remainder=reduce(f*V,pointGB);
+if(remainder!=0)
+{print("ERROR_f_V_NONZERO");print(remainder);quit;}
+print("WEYL_LEFT_REMAINDER_f_V=0");
+
+int i;
+for(i=1;i<=13;i++)
+{
+  // Noncommutative multiplication followed by left-ideal reduction.
+  remainder=reduce(B[i]*V,pointGB);
+  if(remainder!=0)
+  {print("ERROR_B_V_NONZERO_INDEX="+string(i));print(remainder);quit;}
+  print("WEYL_LEFT_REMAINDER_B_"+string(i)+"_V=0");
+}
+print("FULL13_NONCOMMUTATIVE_WEYL_WITNESS_VERIFIED");
+quit;

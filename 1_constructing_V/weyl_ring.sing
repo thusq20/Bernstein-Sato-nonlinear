@@ -1,0 +1,11 @@
+// A_3(Q(q)): Dx*x-x*Dx=Dy*y-y*Dy=Dz*z-z*Dz=1.
+// All other pairs commute. Run this include in a fresh Singular session.
+LIB "nctools.lib";
+ring commutativeSeed=(0,q),(x,y,z,Dx,Dy,Dz),dp;
+matrix weylConstants[6][6];
+weylConstants[1,4]=1;
+weylConstants[2,5]=1;
+weylConstants[3,6]=1;
+def weylRing=nc_algebra(1,weylConstants);
+setring weylRing;
+short=0;

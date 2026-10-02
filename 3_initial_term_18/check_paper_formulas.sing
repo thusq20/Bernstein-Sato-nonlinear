@@ -1,0 +1,38 @@
+// Exact comparison with the explicit LEFT coefficients printed in Section 3.
+< "inputs/annfs.sing";
+< "operators.sing";
+short=0;
+ideal B=annFs;
+poly H=10880*Dz+8960*Dx+4080*y*Dz;
+poly C1=(17/64*y^2-3/8*x+3/8*y+1)*Dz^3
+ -(17353266068493/51488793688640*y+5784422022831/6436099211080)*Dx*Dz^2
+ +133507974611/554984490795*Dy*Dz^2
+ -64972862537/3551900741088*Dx^3
+ +2477018851877122627/254058580258171920*Dx^2*Dz
+ -178019744397/2959917284240*Dx*Dy*Dz;
+poly C10=-16849508437440449/16259749136523002880*Dx*Dz
+ +10005888946567/10868816267729280*Dz^2;
+number c13=11/10474981513557442560;
+poly P1=B[1]/12;
+poly P2=(B[10]-H*B[1])/107712;
+poly P3=C1*B[1]+C10*B[10]+c13*B[13];
+if(P1!=boundOperator1 || P2!=boundOperator2 || P3!=boundOperator3)
+{ ERROR("PAPER_OPERATOR_FORMULA_MISMATCH"); }
+matrix paperLeft1[1][13];
+matrix paperLeft2[1][13];
+matrix paperLeft3[1][13];
+paperLeft1[1,1]=1/12;
+paperLeft2[1,1]=-H/107712;
+paperLeft2[1,10]=1/107712;
+paperLeft3[1,1]=C1;
+paperLeft3[1,10]=C10;
+paperLeft3[1,13]=c13;
+int j;
+for(j=1;j<=13;j++)
+{
+ if(paperLeft1[1,j]!=boundLeft1[1,j] || paperLeft2[1,j]!=boundLeft2[1,j]
+    || paperLeft3[1,j]!=boundLeft3[1,j])
+ { ERROR("PAPER_LEFT_COEFFICIENT_MISMATCH"); }
+}
+print("SECTION3_EXPLICIT_P1_P2_P3_AND_ALL_LEFT_COEFFICIENTS_VERIFIED");
+quit;

@@ -1,0 +1,91 @@
+// Run in a fresh directory containing this script; do not reuse old outputs.
+// F is a tuple; f=F[1]*F[2]*F[3]. The multivariate symbol is F^s.
+LIB "dmodideal.lib";
+
+proc computeAnnfs()
+{
+  ring inputRing=0,(x,y,z),dp;
+  short=0;
+  print("SINGULAR_VERSION="+string(system("version")));
+  ideal F=y,z*y-x^2,z^2+x^2*y+z*y^2+x^3;
+  poly f=F[1]*F[2]*F[3];
+  print("ANNFS_INPUT="+string(F));
+  print("ANNFS_ALGORITHM=annihilatorMultiFs(F,0,1,4)");
+  print("ANNFS_COMPUTE_START");
+  printlevel=1;
+  timer=0;
+  def rawRing=annihilatorMultiFs(F,0,1,4);
+  setring rawRing;
+  short=0;
+  if(nvars(basering)!=9) { ERROR("ANNFS_UNEXPECTED_RING_SIZE"); }
+  int i,j,expected;
+  for(i=1;i<=9;i++)
+  {
+    for(j=i+1;j<=9;j++)
+    {
+      expected=0;
+      if(i<=3 && j==i+3) { expected=1; }
+      if(var(j)*var(i)-var(i)*var(j)!=expected)
+      { ERROR("ANNFS_UNEXPECTED_SOURCE_RELATIONS"); }
+    }
+  }
+  // The library returns ordered (x,y,z,Dx,Dy,Dz,s1,s2,s3), but may
+  // choose collision-safe names. Map by position, never by text replacement.
+  ring base=0,(x,y,z,Dx,Dy,Dz,s(1..3)),(dp(6),dp(3));
+  matrix comm[9][9];
+  comm[1,4]=1;comm[2,5]=1;comm[3,6]=1;
+  def annRing=nc_algebra(1,comm);
+  setring annRing;
+  short=0;
+  map renameVariables=rawRing,x,y,z,Dx,Dy,Dz,s(1),s(2),s(3);
+  ideal annFs=renameVariables(annFs);
+  int generatorCount=size(annFs);
+  if(generatorCount!=13) { ERROR("ANNFS_EXPECTED_13_B_GENERATORS"); }
+  for(i=1;i<=generatorCount;i++)
+  {
+    if(annFs[i]==0) { ERROR("ANNFS_ZERO_B_GENERATOR"); }
+  }
+
+  // A complete, independently reloadable Weyl-ring checkpoint.
+  link checkpoint="ASCII:w annfs.sing";
+  write(checkpoint,"// Computed B_1,...,B_13 generating Ann(F^s).");
+  write(checkpoint,"// F=(y,z*y-x^2,z^2+x^2*y+z*y^2+x^3); f=F[1]*F[2]*F[3].");
+  write(checkpoint,"LIB \"dmodideal.lib\";");
+  write(checkpoint,"ring base=0,(x,y,z,Dx,Dy,Dz,s(1..3)),(dp(6),dp(3));");
+  write(checkpoint,"matrix comm[9][9];comm[1,4]=1;comm[2,5]=1;comm[3,6]=1;");
+  write(checkpoint,"def annRing=nc_algebra(1,comm);setring annRing;short=0;");
+  write(checkpoint,"ideal annFs=");
+  link generators="ASCII:w ann_generators.sing";
+  write(generators,"// Include in the matching Weyl ring; annFs[i] is B_i.");
+  write(generators,"ideal annFs=");
+  for(i=1;i<=generatorCount;i++)
+  {
+    if(i<generatorCount)
+    {
+      write(checkpoint,string(annFs[i])+",");
+      write(generators,string(annFs[i])+",");
+    }
+    else
+    {
+      write(checkpoint,string(annFs[i])+";");
+      write(generators,string(annFs[i])+";");
+    }
+    print("ANNFS_SAVED_B"+string(i));
+  }
+  close(checkpoint);
+  close(generators);
+  // Optional convenient names; load this file in a fresh Singular process.
+  link aliases="ASCII:w B_generators.sing";
+  write(aliases,"< \"annfs.sing\";");
+  for(i=1;i<=generatorCount;i++)
+  {
+    write(aliases,"poly B"+string(i)+"=annFs["+string(i)+"];");
+  }
+  close(aliases);
+  print("ANNFS_SAVED_COUNT="+string(generatorCount));
+  print("ANNFS_CPU_SECONDS="+string(timer));
+  print("ANNFS_COMPUTATION_COMPLETE");
+}
+
+computeAnnfs();
+quit;

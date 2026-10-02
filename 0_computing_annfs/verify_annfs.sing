@@ -1,0 +1,47 @@
+// Independent fresh-process reload and exact, ordered comparison.
+LIB "dmodideal.lib";
+
+proc verifyAnnfs()
+{
+  < "annfs.sing";
+  if(nvars(basering)!=9) { ERROR("ANNFS_RELOAD_UNEXPECTED_RING_SIZE"); }
+  string expectedNames="x,y,z,Dx,Dy,Dz,s(1),s(2),s(3)";
+  string actualNames=string(var(1));
+  int i,j,expected;
+  for(i=2;i<=9;i++) { actualNames=actualNames+","+string(var(i)); }
+  if(actualNames!=expectedNames) { ERROR("ANNFS_RELOAD_UNEXPECTED_NAMES"); }
+  for(i=1;i<=9;i++)
+  {
+    for(j=i+1;j<=9;j++)
+    {
+      expected=0;
+      if(i<=3 && j==i+3) { expected=1; }
+      if(var(j)*var(i)-var(i)*var(j)!=expected)
+      { ERROR("ANNFS_RELOAD_UNEXPECTED_WEYL_RELATIONS"); }
+    }
+  }
+  if(size(annFs)!=13) { ERROR("ANNFS_RELOAD_EXPECTED_13_B_GENERATORS"); }
+  ideal computedB=annFs;
+  < "inputs/reference_ann_generators.sing";
+  if(size(referenceAnn)!=13) { ERROR("ANNFS_REFERENCE_EXPECTED_13_B_GENERATORS"); }
+  for(i=1;i<=13;i++)
+  {
+    if(computedB[i]==0) { ERROR("ANNFS_RELOAD_ZERO_B_GENERATOR"); }
+    if(computedB[i]-referenceAnn[i]!=0)
+    { ERROR("ANNFS_REFERENCE_MISMATCH_B"+string(i)); }
+    print("ANNFS_EXACT_MATCH_B"+string(i));
+  }
+  kill annFs;
+  < "ann_generators.sing";
+  if(size(annFs)!=13) { ERROR("ANNFS_INCLUDE_EXPECTED_13_B_GENERATORS"); }
+  for(i=1;i<=13;i++)
+  {
+    if(annFs[i]-computedB[i]!=0)
+    { ERROR("ANNFS_INCLUDE_MISMATCH_B"+string(i)); }
+  }
+  print("ANNFS_VERIFIED_COUNT=13");
+  print("ANNFS_REFERENCE_ORDERED_EQUAL");
+}
+
+verifyAnnfs();
+quit;

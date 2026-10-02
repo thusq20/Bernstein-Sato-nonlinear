@@ -1,0 +1,85 @@
+// Run 3_initial_term18.sing first, then this script in a fresh Singular process.
+< "inputs/annfs.sing";
+< "operators.sing";
+< "weight_tools.sing";
+ideal B=annFs;
+short=0;
+
+// Verify the left combinations and initial parts.
+list P=list(boundOperator1,boundOperator2,boundOperator3);
+list C=list(boundLeft1,boundLeft2,boundLeft3);
+int i,j;
+matrix row;
+poly identity;
+for(i=1;i<=3;i++)
+{
+  row=C[i];identity=0;
+  for(j=1;j<=13;j++) { identity=identity+row[1,j]*B[j]; }
+  if(identity!=P[i]) { ERROR("DEGREE_CHECK_LEFT_IDENTITY_FAILURE"); }
+}
+poly E=3*x*Dx+2*y*Dy+4*z*Dz;
+poly S=2*s(1)+6*s(2)+8*s(3);
+if(initialWeight(P[1])!=2 || initialWeight(P[2])!=0 || initialWeight(P[3])!=-6)
+{ ERROR("MINIMUM_SIGNED_WEIGHT_FAILURE"); }
+if(weightInitial(P[1])!=y*(E-S)/3)
+{ ERROR("P1_INITIAL_FAILURE"); }
+if(weightInitial(P[2])!=(z*Dz+1)*(E-S)/3)
+{ ERROR("P2_INITIAL_FAILURE"); }
+if(weightInitial(P[3])!=boundLastInitial)
+{ ERROR("P3_INITIAL_FAILURE"); }
+print("DEGREE_CHECK_LEFT_IDENTITIES_AND_INITIALS_EXACT_PASS");
+
+// First impose h=2*s1+6*s2+8*s3+27=0; b,c remain independent.
+// m is an additional independent scalar for the falling-factorial identity.
+ring symbolicBase=(0,b,c,m),(x,y,z,Dx,Dy,Dz,s(1..3)),(dp(6),dp(3));
+matrix symbolicCommutators[9][9];
+symbolicCommutators[1,4]=1;
+symbolicCommutators[2,5]=1;
+symbolicCommutators[3,6]=1;
+def symbolicWeyl=nc_algebra(1,symbolicCommutators);
+setring symbolicWeyl;
+short=0;
+poly p3Initial=imap(annRing,boundLastInitial);
+p3Initial=subst(p3Initial,s(1),-27/2-3*b-4*c);
+p3Initial=subst(p3Initial,s(2),b);
+p3Initial=subst(p3Initial,s(3),c);
+
+// PBW normal ordering gives, for t=c*x^alpha*D^beta,
+// t*Dx^m*delta = c*(-1)^|alpha|*(m+beta_x)_(alpha_x)
+//                 *(beta_y)_(alpha_y)*(beta_z)_(alpha_z)
+//                 *Dx^(m+beta_x-alpha_x)*Dy^(beta_y-alpha_y)
+//                 *Dz^(beta_z-alpha_z)*delta.
+// We encode exponents after removing the common symbolic Dx^(m-10).
+// m appears ONLY in exact scalar falling factorials in Q(b,c,m).
+poly rest=p3Initial;
+poly term;
+poly encodedAction=0;
+number scalar;
+intvec ee;
+int k;
+int maxXPower=0;
+while(rest!=0)
+{
+  term=lead(rest);ee=leadexp(term);rest=rest-term;
+  if(ee[1]>maxXPower) { maxXPower=ee[1]; }
+  if(ee[5]>=ee[2] && ee[6]>=ee[3])
+  {
+    scalar=leadcoef(term);
+    if((ee[1]+ee[2]+ee[3])%2) { scalar=-scalar; }
+    for(k=0;k<ee[1];k++) { scalar=scalar*(m+ee[4]-k); }
+    for(k=0;k<ee[2];k++) { scalar=scalar*(ee[5]-k); }
+    for(k=0;k<ee[3];k++) { scalar=scalar*(ee[6]-k); }
+    if(10+ee[4]-ee[1]<0) { ERROR("ENCODING_POWER_FAILURE"); }
+    encodedAction=encodedAction+scalar*Dx^(10+ee[4]-ee[1])*
+      Dy^(ee[5]-ee[2])*Dz^(ee[6]-ee[3]);
+  }
+}
+if(maxXPower>3) { ERROR("UNEXPECTED_X_POWER"); }
+poly expected=3*m*(m-1)*(m-10-b-c)*Dx^8*Dz^3;
+if(encodedAction!=expected) { ERROR("SYMBOLIC_FALLING_FACTORIAL_FAILURE"); }
+print("PURE_DX_ACTION_ALL_M_SYMBOLIC_EXACT_PASS");
+print("P3_INITIAL_MAXIMUM_SPATIAL_X_EXPONENT="+string(maxXPower));
+
+print("PURE_DX_ACTION=3*m*(m-1)*(m-10-b-c)*Dx^(m-2)*Dz^3*delta, m>=3");
+print("WEIGHTED_DEGREE_18_BOUND_CERTIFICATE_PASSED");
+quit;

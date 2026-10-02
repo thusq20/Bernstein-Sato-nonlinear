@@ -1,0 +1,69 @@
+ring constructorBase=(0,b,c),(x,y,z,Dx,Dy,Dz,s(1..3)),(dp(6),dp(3));
+matrix comm[9][9];
+comm[1,4]=1;comm[2,5]=1;comm[3,6]=1;
+def planeWeyl=nc_algebra(1,comm);
+setring planeWeyl;
+short=0;
+< "operators.sing";
+
+proc onPlane(poly p)
+{
+  p=subst(p,s(1),-27/2-3*b-4*c);
+  p=subst(p,s(2),b);
+  p=subst(p,s(3),c);
+  return(p);
+}
+
+poly f=y*(z*y-x^2)*(z^2+x^2*y+z*y^2+x^3);
+poly P1=onPlane(boundOperator1);
+poly P2=onPlane(boundOperator2);
+poly P3=onPlane(boundOperator3);
+ideal pointGB=std(ideal(x,y,z));
+
+int i,j,k,oi,col,row,idx;
+intmat basisExponents[84][3];
+ideal basisVectors;
+for(i=0;i<=6;i++){for(j=0;j<=9;j++){for(k=0;k<=4;k++){
+  if(3*i+2*j+4*k<=18){
+    idx++;
+    basisExponents[idx,1]=i;
+    basisExponents[idx,2]=j;
+    basisExponents[idx,3]=k;
+    basisVectors[idx]=Dx^i*Dy^j*Dz^k;
+  }
+}}}
+
+list operators=list(f,P1,P2);
+matrix fullMap[252][84];
+poly rest,t;
+for(oi=1;oi<=3;oi++){
+  for(col=1;col<=84;col++){
+    rest=reduce(operators[oi]*basisVectors[col],pointGB);
+    while(rest!=0){
+      t=lead(rest);rest=rest-t;
+      for(row=1;row<=84;row++){
+        if(t==leadcoef(t)*basisVectors[row]){
+          fullMap[(oi-1)*84+row,col]=
+            fullMap[(oi-1)*84+row,col]+leadcoef(t);
+          break;
+        }
+      }
+    }
+  }
+}
+
+int rankPhi=rank(fullMap);
+poly p3Delta=reduce(P3,pointGB);
+
+link out="ASCII:w phi_matrices.sing";
+write(out,"intmat basisExponents[84][3]="+string(basisExponents)+";");
+write(out,"ideal basisVectors="+string(basisVectors)+";");
+write(out,"matrix fullMap[252][84]="+string(fullMap)+";");
+write(out,"int rankPhi="+string(rankPhi)+";");
+write(out,"poly p3Delta="+string(p3Delta)+";");
+close(out);
+print("FULL_MAP_SHAPE="+string(nrows(fullMap))+"x"+string(ncols(fullMap)));
+print("ALL_"+string(nrows(fullMap))+"_ROWS_RETAINED");
+print("CORE_RANK_PHI="+string(rankPhi));
+print("P3_DELTA="+string(p3Delta));
+quit;
